@@ -1,0 +1,161 @@
+# =============================================================
+# Databricks Asset Bundle — TastyBytes Medallion Pipeline
+# Place this file at the ROOT of your GitHub repo
+# =============================================================
+
+bundle:
+  name: tastybytes_medallion
+
+# ------------------------------------------------------------------
+# Variables — each target overrides these
+# ------------------------------------------------------------------
+variables:
+  catalog:
+    description: "Unity Catalog to use for this environment"
+    default: tastybytes_dev
+
+# ------------------------------------------------------------------
+# Targets (all point to your single workspace, different catalogs)
+# ------------------------------------------------------------------
+targets:
+
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog: tastybytes_dev
+    workspace:
+      host: https://adb-7405607037153038.18.azuredatabricks.net
+
+  staging:
+    mode: development
+    variables:
+      catalog: tastybytes_staging
+    workspace:
+      host: https://adb-7405607037153038.18.azuredatabricks.net
+
+  prod:
+    mode: production
+    variables:
+      catalog: tastybytes
+    workspace:
+      host: https://adb-7405607037153038.18.azuredatabricks.net
+
+# ------------------------------------------------------------------
+# Job definition
+# ------------------------------------------------------------------
+resources:
+  jobs:
+    tastybytes_pipeline:
+      name: "TastyBytes Medallion Pipeline [${bundle.target}]"
+
+      # These become widget values in every notebook
+      parameters:
+        - name: environment
+          default: "dev"
+        - name: catalog
+          default: "${var.catalog}"
+        - name: full_load
+          default: "false"
+        - name: reprocess_start_date
+          default: ""
+        - name: reprocess_end_date
+          default: ""
+
+      email_notifications:
+        on_failure:
+          - srijay77@gmail.com
+        no_alert_for_skipped_runs: true
+
+      max_concurrent_runs: 1
+
+      # ----------------------------------------------------------
+      # Tasks — mirrors your DAG:
+      #   silver_categories ─┐
+      #   silver_riders      ├──► silver_orders ──► gold ──► validate
+      #   silver_customers   │
+      #   silver_merchants   ┘
+      #
+      # Notebook paths are relative to this file (repo root).
+      # Notebooks sit directly in Medallion_ETL folder — no subfolder.
+      # ----------------------------------------------------------
+      tasks:
+
+        - task_key: silver_categories
+          notebook_task:
+            notebook_path: ./01_Silver_Categories
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: silver_riders
+          notebook_task:
+            notebook_path: ./02_Silver_Riders
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: silver_customers
+          notebook_task:
+            notebook_path: ./03_Silver_Customers
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: silver_merchants
+          notebook_task:
+            notebook_path: ./04_Silver_Merchants
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: silver_orders
+          depends_on:
+            - task_key: silver_categories
+            - task_key: silver_riders
+            - task_key: silver_customers
+            - task_key: silver_merchants
+          notebook_task:
+            notebook_path: ./05_Silver_Orders
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: gold
+          depends_on:
+            - task_key: silver_orders
+          notebook_task:
+            notebook_path: ./06_Silver_to_Gold
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
+
+        - task_key: validate
+          depends_on:
+            - task_key: gold
+          notebook_task:
+            notebook_path: ./07_Data_Quality
+            base_parameters:
+              environment:          "{{job.parameters.environment}}"
+              catalog:              "{{job.parameters.catalog}}"
+              full_load:            "{{job.parameters.full_load}}"
+              reprocess_start_date: "{{job.parameters.reprocess_start_date}}"
+              reprocess_end_date:   "{{job.parameters.reprocess_end_date}}"
