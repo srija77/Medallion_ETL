@@ -107,6 +107,7 @@ if record_count == 0:
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 10
 # Remove duplicates - keep latest per rider_id
 riders_clean = remove_duplicates(
     df=riders_bronze,
@@ -138,11 +139,13 @@ riders_clean = apply_null_defaults(
 )
 
 # Clamp rating to valid range (0-5)
+# Cast to double first: bronze rating is STRING (e.g. "3.8"), int literals would
+# cause Spark to infer BIGINT as result type, which fails when casting "3.8" -> BIGINT
 riders_clean = riders_clean.withColumn(
     "rating",
-    when(col("rating") < 0, 0)
-    .when(col("rating") > 5, 5)
-    .otherwise(col("rating"))
+    when(col("rating").cast("double") < 0, 0.0)
+    .when(col("rating").cast("double") > 5, 5.0)
+    .otherwise(col("rating").cast("double"))
 )
 
 # Add audit columns

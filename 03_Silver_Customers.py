@@ -482,6 +482,6 @@ print("=" * 50)
 
 # MAGIC %sql
 # MAGIC SELECT *
-# MAGIC FROM tastybytes.silver.customers
+# MAGIC FROM dwh_tastybytes.silver.customers
 # MAGIC WHERE customer_id = 3
 # MAGIC ORDER BY modified_date;
