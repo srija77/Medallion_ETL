@@ -83,7 +83,7 @@ resources:
 
         - task_key: silver_categories
           notebook_task:
-            notebook_path: ./01_Silver_Categories
+            notebook_path: ./01_Silver_Categories.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -93,7 +93,7 @@ resources:
 
         - task_key: silver_riders
           notebook_task:
-            notebook_path: ./02_Silver_Riders
+            notebook_path: ./02_Silver_Riders.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -103,7 +103,7 @@ resources:
 
         - task_key: silver_customers
           notebook_task:
-            notebook_path: ./03_Silver_Customers
+            notebook_path: ./03_Silver_Customers.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -113,7 +113,7 @@ resources:
 
         - task_key: silver_merchants
           notebook_task:
-            notebook_path: ./04_Silver_Merchants
+            notebook_path: ./04_Silver_Merchants.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -128,7 +128,7 @@ resources:
             - task_key: silver_customers
             - task_key: silver_merchants
           notebook_task:
-            notebook_path: ./05_Silver_Orders
+            notebook_path: ./05_Silver_Orders.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -140,7 +140,7 @@ resources:
           depends_on:
             - task_key: silver_orders
           notebook_task:
-            notebook_path: ./06_Silver_to_Gold
+            notebook_path: ./06_Silver_to_Gold.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
@@ -152,7 +152,7 @@ resources:
           depends_on:
             - task_key: gold
           notebook_task:
-            notebook_path: ./07_Data_Quality
+            notebook_path: ./07_Data_Quality.py
             base_parameters:
               environment:          "{{job.parameters.environment}}"
               catalog:              "{{job.parameters.catalog}}"
